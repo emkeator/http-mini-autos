@@ -10,29 +10,44 @@ class App extends Component {
 
     this.state = {
       vehiclesToDisplay: [],
-      buyersToDisplay: []
+      buyersToDisplay: [],
+      vehicleURL: 'https://joes-autos.herokuapp.com'
     }
 
     this.getVehicles = this.getVehicles.bind(this);
     this.getPotentialBuyers = this.getPotentialBuyers.bind(this);
     this.onSoldButtonClick = this.onSoldButtonClick.bind(this);
     this.addCar = this.addCar.bind(this);
+    this.addBuyer = this.addBuyer.bind(this);
     this.filterByColor = this.filterByColor.bind(this);
     this.filterByMake = this.filterByMake.bind(this);
   }
 
   getVehicles() {
-    // axios (GET)
-    // setState with response -> vehiclesToDisplay
+    axios.get(this.state.vehicleURL+'/api/vehicles')
+      .then((response) => {
+        this.setState({
+            vehiclesToDisplay: response.data.vehicles
+        })
+      })
   }
 
   getPotentialBuyers() {
-    // axios (GET)
-    // setState with response -> buyersToDisplay
+    axios.get(this.state.vehicleURL+'/api/buyers')
+      .then((response) => {
+        this.setState({
+            buyersToDisplay: response.data.buyers
+        })
+      })
   }
 
-  onSoldButtonClick() {
-    // axios (DELETE)
+  onSoldButtonClick(id) {
+    axios.delete(this.state.vehicleURL+'/api/vehicles/'+id)
+      .then((response) => {
+        this.setState({
+            vehiclesToDisplay: response.data.vehicles
+        })
+      })
     // setState with response -> vehiclesToDisplay
   }
 
@@ -44,34 +59,77 @@ class App extends Component {
 
   filterByColor() {
     let color = this.refs.selectedColor.value;
-    // axios (GET)
-    // setState with response -> vehiclesToDisplay
+    axios.get(this.state.vehicleURL+'/api/vehicleByColor' /*, {
+      params: {
+        Color: color
+      }
+    }*/)
+      .then((response) => {
+        
+        this.setState({
+            vehiclesToDisplay: response.data.vehicles
+        })
+      })
   }
 
-  updatePrice(priceChange) {
-    // axios (PUT)
+  updatePrice(id, priceChange) {
+    axios.put(this.state.vehicleURL+'/api/vehicle/'+id+'/'+priceChange)
+    .then((response) => {
+        
+        this.setState({
+            vehiclesToDisplay: response.data.vehicles
+        })
+      })
     // setState with response -> vehiclesToDisplay
   }
 
   addCar(){
-  let newCar = {
-    make: this.refs.make.value,
-    model: this.refs.model.value,
-    color: this.refs.color.value,
-    year: this.refs.year.value,
-    price: this.refs.price.value
-  }  
-  // axios (POST)
+    let newCar = {
+      make: this.refs.make.value,
+      model: this.refs.model.value,
+      color: this.refs.color.value,
+      year: this.refs.year.value,
+      price: this.refs.price.value
+    }  
+    return axios.post(this.state.vehicleURL+'/api/vehicles', newCar)
+      .then((response) => {
+          if(response.status === 200) {
+            this.setState({
+              success: true,
+              vehiclesToDisplay: response.data.vehicles
+            })
+          } else {
+            this.setState({
+              success: false
+            })
+          }
+          
+        })
+
   // setState with response -> vehiclesToDisplay
 }
 
 addBuyer() {
-  let newBuyer ={
+  let newBuyer = {
     name: this.refs.name.value,
     phone: this.refs.phone.value,
     address: this.refs.address.value
   }
-  //axios (POST)
+  
+  return axios.post(this.state.vehicleURL+'/api/buyers', newBuyer)
+    .then((response) => {
+        if(response.status === 200) {
+          this.setState({
+            success: true,
+            buyersToDisplay: response.data.buyers
+          })
+        } else {
+          this.setState({
+            success: false
+          })
+        }
+        
+      })
   // setState with response -> buyersToDisplay
 }
 
@@ -86,10 +144,10 @@ addBuyer() {
           <p>Color: { v.color }</p>
           <p>Price: { v.price }</p>
           <button
-            onClick={ () => this.updatePrice('up') }
+            onClick={ () => this.updatePrice(v.id, 'up') }
             >Increase Price</button>
           <button
-            onClick={ () => this.updatePrice('down') }
+            onClick={ () => this.updatePrice(v.id, 'down') }
             >Decrease Price</button>  
           <button 
             onClick={ () => this.onSoldButtonClick(v.id) }
@@ -163,7 +221,7 @@ addBuyer() {
           <input className='btn-sp' placeholder='year' ref='year'/>
           <input className='btn-sp' placeholder='color' ref='color'/>
           <input className='btn-sp' placeholder='price' ref='price'/>
-          <button className='btn-sp' onClick={this.addCar}>Add</button>
+          <button className='btn-sp' onClick={this.addCar} style={{backgroundColor: this.state.success ? 'lightgreen':'blue'}}>Add</button>
         </p>
         <p className='form-wrap'>
           Add Possible buyer:
